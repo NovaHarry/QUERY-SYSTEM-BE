@@ -22,7 +22,7 @@ let querySchema = new mongoose.Schema({
         },
     },
     createdAt:{type:String, default: content},
-    resolved:{type:String, default: "unresolved"},
+    resolved:{type:String, default: "Unresolved"},
     assignedMentor:{type:String}
 },
 {

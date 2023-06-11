@@ -51,6 +51,29 @@ router.get('/queryID/:queryID' , async(req, res)=>{
     }
 })
 
+
+router.put('/query-resolve/:queryID',async(req, res)=>{
+    try{
+      let queryResolved = await queryModel.findOne({queryId:req.params.queryID});
+
+        queryResolved.resolved = "Resolved";
+
+        await queryResolved.save()
+
+      res.status(200).send({
+        message:"We are glad you got you answer!"
+      })
+    }
+    catch (error){
+      res.status(500).send({
+        message:"Unable to update",
+        error
+    })
+  }
+  });
+
+
+
 router.post('/addquery' , async (req, res)=>{
     try{
         let query = await queryModel.findOne({queryId: req.body.queryId});
@@ -67,42 +90,55 @@ router.post('/addquery' , async (req, res)=>{
 
             let mentors = await mentorModel.findOne({mentorId : QUERYID.slice(5)});
 
+            query.assignedMentor = mentors.mentorName;
+
+            let timeFormat = Number(query.time.slice(0,2));
+
+            {timeFormat > 12 ? 
+                query.time = `${query.time} PM`
+                :
+                query.time = `${query.time} AM`
+            }
+            
+            
             await query.save()
 
-            // var params = {
-            //     to_mail: query.email,
-            //     query_no: `QN${queryIDS}`,
-            //     title : query.title,
-            //     message: `Your Query is taken up. ${mentors.mentorName} will clarify your doubts at your scheduled time. Please be available.`
-            // }
+            
+
+            var params = {
+                to_mail: query.email,
+                query_no: `QN${queryIDS}`,
+                title : query.title,
+                message: `Your Query is taken up. ${mentors.mentorName} will clarify your doubts at your scheduled time. Please be available.`
+            }
               
-            //   emailjs
-            //     .send('service_b7oqsko', 'template_g95pcp7', params, {
-            //       publicKey: 'yYVMMzW7rNV0f4pnc',
-            //       privateKey: '68aWyRUyd5qi2Nhn_PVUM', // optional, highly recommended for security reasons
-            //     })
-            //     .then(
-            //       function (response) {
-            //         console.log('SUCCESS!', response.status, response.text);
-            //       },
-            //       function (err) {
-            //         console.log('FAILED...', err);
-            //       },
-            //     );
+              emailjs
+                .send('service_b7oqsko', 'template_g95pcp7', params, {
+                  publicKey: 'yYVMMzW7rNV0f4pnc',
+                  privateKey: '68aWyRUyd5qi2Nhn_PVUM', // optional, highly recommended for security reasons
+                })
+                .then(
+                  function (response) {
+                    console.log('SUCCESS!', response.status, response.text);
+                  },
+                  function (err) {
+                    console.log('FAILED...', err);
+                  },
+                );
 
             res.status(200).send({
                 message:"Query added successfully",
               })
         }else{
-            res.status(400).send({
-                message:"Unable to send this query"
+            res.status(500).send({
+                message:"Unable to save this query. Make sure you fill all the fields."
               })
         }
 
     }
     catch(error){
         res.status(500).send({
-            message:"Internal server error",
+            message:"Unable to save this query. Make sure you fill all the fields.",
             error
         })
     }
